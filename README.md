@@ -1,2 +1,2 @@
 # Binary-Segmentation
-This is binary segmentation train tools.
+This is the general training code for binary semantic segmentation
