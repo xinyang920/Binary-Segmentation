@@ -85,11 +85,11 @@ def train(Dataset, Network, config_dict):
     cfg = Dataset.Config(datapath=config_dict["train_datapath"], savepath=config_dict["out_path"], 
                             mode='train', batch=config_dict["batch"], lr=config_dict["lr"], 
                             resize=config_dict["resize"], trainsize=config_dict["trainsize"],
-                            momen=config_dict["momen"], decay=config_dict["decay"], epoch=config_dict["epoch"])
+                            momen=config_dict["momen"], decay=config_dict["decay"], epoch=config_dict["epoch"], load_edge = True)
     data = Dataset.Data(cfg)
     loader = DataLoader(data, collate_fn=data.collate, batch_size=cfg.batch, shuffle=True, num_workers=config_dict["train_num_workers"])
     ## val dataloader
-    val_cfg = Dataset.Config(datapath=config_dict["val_datapath"], mode='test', resize=config_dict["resize"],)
+    val_cfg = Dataset.Config(datapath=config_dict["val_datapath"], mode='test', resize=config_dict["resize"], load_edge = False)
     val_data = Dataset.Data(val_cfg)
     val_loader = DataLoader(val_data, batch_size=1, shuffle=False, num_workers=config_dict["val_num_workers"])
     min_mae = 1.0
@@ -121,14 +121,14 @@ def train(Dataset, Network, config_dict):
         # optimizer.param_groups[1]['lr'] = (1-abs((epoch+1)/(cfg.epoch+1)*2-1))*cfg.lr
         optimizer.param_groups[0]['lr'] = ((1 - float(epoch) / cfg.epoch) ** 0.9) * config_dict["backbone_lr_ratio"] *cfg.lr
         optimizer.param_groups[1]['lr'] = ((1 - float(epoch) / cfg.epoch)) ** 0.9 *cfg.lr
-        for step, (image, mask) in enumerate(loader):
-            image, mask = image.cuda().float(), mask.cuda().float()
+        for step, (image, mask, edge) in enumerate(loader):
+            image, mask, edge = image.cuda().float(), mask.cuda().float(), edge.cuda().float()
             out, ax1, ax2, ax3 = net(image)
             loss1 = total_loss(out, mask)
-            loss2 = total_loss(ax1, mask)
+            loss2 = bce(ax1, edge)
             loss3 = total_loss(ax2, mask)
             loss4 = total_loss(ax3, mask)
-            loss = loss1 + 2*loss2 +loss3/2 +loss4/4
+            loss = loss1 + loss2 +loss3/2 +loss4/4
 
             optimizer.zero_grad()
             with amp.scale_loss(loss, optimizer) as scale_loss:

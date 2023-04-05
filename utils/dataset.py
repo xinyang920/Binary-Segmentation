@@ -106,13 +106,22 @@ class Data(Dataset):
         else:
             image = cv2.imread(self.cfg.datapath+'/image/'+name+'.jpg')[:,:,::-1].astype(np.float32)
         mask = cv2.imread(self.cfg.datapath+'/mask/'+name+'.png', 0).astype(np.float32)
+        if self.cfg.load_edge == True:
+            edge = cv2.imread(self.cfg.datapath+'/edge/'+name+'.png', 0).astype(np.float32)
+        else:
+            edge = None
         shape = mask.shape
 
-        if self.cfg.mode == 'train':
+        if self.cfg.mode == 'train' and self.cfg.load_edge == False:
             image, mask = self.normalize(image, mask)
             image, mask = self.randomcrop(image, mask)
             image, mask = self.randomflip(image, mask)
             return image, mask
+        elif self.cfg.mode == 'train' and self.cfg.load_edge == True:
+            image, mask, edge = self.normalize(image, mask, edge)
+            image, mask, edge = self.randomcrop(image, mask, edge)
+            image, mask, edge = self.randomflip(image, mask, edge)
+            return image, mask, edge
         else:
             image, mask = self.normalize(image, mask)
             image, mask = self.resize(image, mask)
@@ -120,14 +129,26 @@ class Data(Dataset):
             return image, mask, shape, name
 
     def collate(self, batch):
-        size = self.cfg.trainsize[np.random.randint(0, len(self.cfg.trainsize))]
-        image, mask = [list(item) for item in zip(*batch)]
-        for i in range(len(batch)):
-            image[i] = cv2.resize(image[i], dsize=(size, size), interpolation=cv2.INTER_LINEAR)
-            mask[i] = cv2.resize(mask[i],  dsize=(size, size), interpolation=cv2.INTER_LINEAR)
-        image = torch.from_numpy(np.stack(image, axis=0)).permute(0, 3, 1, 2)
-        mask = torch.from_numpy(np.stack(mask, axis=0)).unsqueeze(1)
-        return image, mask
+        if self.cfg.load_edge == False:
+            size = self.cfg.trainsize[np.random.randint(0, len(self.cfg.trainsize))]
+            image, mask = [list(item) for item in zip(*batch)]
+            for i in range(len(batch)):
+                image[i] = cv2.resize(image[i], dsize=(size, size), interpolation=cv2.INTER_LINEAR)
+                mask[i] = cv2.resize(mask[i],  dsize=(size, size), interpolation=cv2.INTER_LINEAR)
+            image = torch.from_numpy(np.stack(image, axis=0)).permute(0, 3, 1, 2)
+            mask = torch.from_numpy(np.stack(mask, axis=0)).unsqueeze(1)
+            return image, mask
+        else:
+            size = self.cfg.trainsize[np.random.randint(0, len(self.cfg.trainsize))]
+            image, mask, edge = [list(item) for item in zip(*batch)]
+            for i in range(len(batch)):
+                image[i] = cv2.resize(image[i], dsize=(size, size), interpolation=cv2.INTER_LINEAR)
+                mask[i] = cv2.resize(mask[i],  dsize=(size, size), interpolation=cv2.INTER_LINEAR)
+                edge[i] = cv2.resize(edge[i],  dsize=(size, size), interpolation=cv2.INTER_LINEAR)
+            image = torch.from_numpy(np.stack(image, axis=0)).permute(0, 3, 1, 2)
+            mask = torch.from_numpy(np.stack(mask, axis=0)).unsqueeze(1)
+            edge = torch.from_numpy(np.stack(edge, axis=0)).unsqueeze(1)
+            return image, mask, edge
 
     def __len__(self):
         return len(self.samples)
