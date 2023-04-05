@@ -1,0 +1,91 @@
+---
+# ———————————————————————— 通用参数 ———————————————————————— #
+CUDA_DEVICE: "0"
+# ———————————————————————— 是否训练 ———————————————————————— #
+start_train: True
+
+batch: 48 
+lr: 0.01
+# 主干网络学习率倍数
+backbone_lr_ratio: 0.3
+
+epoch: 80
+# 保存最后多少个epoch
+save_epoch_num: 60
+train_num_workers: 0
+val_num_workers: 0
+
+momen: 0.9
+decay: 0.0005
+resize: 416
+trainsize:
+  # - 384
+  - 416
+  # - 460
+  
+# 断点续训:
+continue_train: False
+continue_train_pth: "./out/model-70"
+continue_train_start_epoch: 70
+
+# 是否开启验证集:
+val: True
+# 2/3 epoch后开始验证
+val_ratio: 0.6
+# ecssd 共1000张图片
+val_total: 250
+
+# 随机种子
+Random_seeds: 520
+# 权重路径
+out_path: "./out"
+# 训练集
+train_datapath: "E:/xyang/cod/TrainDataset"
+val_datapath: "E:/xyang/cod/CAMO"
+# 数据集路径:
+data_path: "E:/xyang/cod/"
+# 推断数据集:
+data_name:
+  - "CAMO"
+  - "CHAMELEON"
+  - "COD10K"
+  - "NC4K"
+# ———————————————————————— 评价 ———————————————————————— #
+# 是否评价
+start_eval: True
+# 是否需要先推断
+start_test: True
+# 不需要则改成False
+method_name: False
+# 模型权重: , 不需要则改成False
+model_name: #False
+
+  - "model-40"
+  - "model-50"
+  - "model-60"
+  - "model-70"
+  - "model-80"
+  # - "model-90"
+  # - "model-100"
+
+# 评价保存位置:
+save_eval_csv: "../result.csv"
+# 权重路径:
+model_path: "./out/"
+# 图片保存路径:
+save_path: "./result/"
+
+# 小数位:
+Decimal_places: 4
+# 评价指标(不能改):
+Evaluation_indicators:
+  - "S-measure"
+  - "MAE"
+  - "WFm"
+  # - "maxFm"
+  # - "meanFm"
+  # - "adpFm"
+  # - "maxEm"
+  - "meanEm"
+  # - "adpEm"
+...
